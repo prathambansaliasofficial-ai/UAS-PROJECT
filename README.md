@@ -1,10 +1,7 @@
-
-# Disaster Relief Assignment System – Refactored
+# Disaster Relief Assignment System
 
 ## Overview
-This project is a cleaner, more reliable version of a disaster relief assignment system that uses computer vision to detect relief camps and injured people from an image, then assigns each person to the most suitable camp based on urgency and distance.
-
-The refactored version focuses on clarity, stability, and flexibility. It is easier to understand, easier to modify, and much more reliable than the original version.
+This system uses computer vision to detect relief camps and injured people from an image, then assigns each person to the most suitable camp based on urgency and distance.
 
 ## Tech Stack
 
@@ -14,98 +11,25 @@ The refactored version focuses on clarity, stability, and flexibility. It is eas
 - **NumPy** - Numerical computing library for array operations and mathematical calculations
 - **Math** - Standard Python library for distance calculations
 
-### Computer Vision Techniques Used
-- **HSV Color Space Segmentation** - For identifying land, ocean, camps, and casualties by color
-- **Hough Circle Transform** - For detecting circular camp structures
-- **Contour Detection** - For identifying casualty shapes and positions
-- **Gaussian Blur** - For noise reduction before circle detection
-- **Morphological Operations** - For shape approximation and classification
+### Computer Vision Techniques
+- **HSV Color Space Segmentation** - Identifies land, ocean, camps, and casualties by color
+- **Hough Circle Transform** - Detects circular camp structures
+- **Contour Detection** - Identifies casualty shapes and positions
+- **Gaussian Blur** - Reduces noise before circle detection
+- **Shape Approximation** - Classifies casualties by geometric shape
 
 ### Key Algorithms
 - **Priority-Based Greedy Assignment** - Assigns casualties to camps based on urgency and proximity
 - **Euclidean Distance Calculation** - Measures spatial proximity between casualties and camps
-- **Shape Classification** - Identifies age groups based on geometric shape (triangles, rectangles, polygons)
+- **Shape Classification** - Identifies age groups based on geometric shapes (triangles, rectangles, polygons)
 
-### No External Dependencies Beyond Standard Stack
-The project intentionally uses only widely-available, stable libraries:
-- ✅ No machine learning frameworks
-- ✅ No web frameworks
-- ✅ No database systems
-- ✅ Minimal dependencies for maximum portability
+## Installation
 
-This keeps the system lightweight, fast, and easy to deploy in resource-constrained disaster relief scenarios.
-
-## What Changed and Why It Matters
-
-### Centralized Configuration
-Earlier, important values like detection ranges and thresholds were scattered throughout the project, making it difficult to adjust or debug. Now, everything is organized in one place. This makes tuning the system faster and reduces mistakes.
-
-### Improved Color Detection
-The system now uses a consistent method for recognizing colors, which makes it more accurate under different lighting conditions. This improves how camps and casualties are identified and reduces errors.
-
-### No More Duplicate Logic
-Previously, some calculations and detection methods were repeated in multiple places. Now, each task has one clear implementation. This makes the system easier to maintain and less prone to bugs.
-
-### Better Error Handling
-Instead of abruptly stopping when something goes wrong, the system now handles issues gracefully. If camps or casualties cannot be detected, the program reports the issue clearly and continues safely where possible.
-
-### Structured, Object-Oriented Design
-The project now uses clearly defined components for camps, casualties, and the overall assignment process. This improves readability and makes the system easier to extend in the future.
-
-### Modular Architecture
-Each part of the workflow has its own responsibility. Image loading, segmentation, detection, assignment, reporting, and saving results are all handled separately. This makes debugging simpler and future upgrades smoother.
-
-### Professional Logging
-Instead of random print statements, the system now provides structured progress updates. You can clearly see what is happening at each step and identify problems quickly.
-
-### Input Validation
-The system now checks for invalid data before processing. This prevents crashes and ensures the output remains reliable even when inputs are imperfect.
-
-### Removed Unused Code
-Old or unnecessary parts that added confusion have been removed. The result is a cleaner and more efficient system.
-
-### Flexible Output Management
-Output files are now organized in a consistent way, making results easier to access and manage across different environments.
-
-### Detailed Reporting
-After processing, the system provides a clear summary showing:
-* Number of camps detected
-* Number of casualties found
-* How many were successfully assigned
-* Camp capacity usage
-* Overall rescue effectiveness
-
-This makes the results easy to understand for both technical and non-technical users.
-
-## Design Philosophy
-The assignment process balances urgency and distance. People with higher priority are matched with the nearest available camp, ensuring the most effective use of limited resources.
-
-## Extensibility
-The system is designed so that new camp types, casualty conditions, or scoring rules can be added easily. This allows it to adapt to different disaster scenarios without major restructuring.
-
-## Testing and Reliability
-Because the system is modular, individual parts can be tested independently. This improves confidence in results and makes future development safer.
-
-## Performance
-The current method works efficiently for typical disaster scenarios. For very large datasets, future versions could include more advanced optimization techniques to further improve speed and accuracy.
-
-## Future Improvements
-Potential upgrades include:
-* Processing multiple images at once
-* Real-time video analysis
-* Learning from past data to improve assignments
-* Web-based interface for easier access
-* Integration with mapping systems
-* Adjustable priority weighting
-
-## Requirements
-
-### Installation
 ```bash
 pip install opencv-python numpy
 ```
 
-### Minimum Requirements
+### Requirements
 - Python 3.7 or higher
 - OpenCV 4.5.0 or higher
 - NumPy 1.19.0 or higher
@@ -124,43 +48,206 @@ The script will:
 4. Save visualization results to the `output/` directory
 5. Print a detailed report
 
+### Configuration
+All parameters can be adjusted in the `CONFIG` dictionary at the top of the script:
+
+```python
+CONFIG = {
+    # HSV ranges for segmentation
+    'ocean_lower': np.array([90, 50, 50]),
+    'ocean_upper': np.array([140, 255, 255]),
+    
+    # Circle detection parameters
+    'hough_param1': 100,
+    'hough_param2': 30,
+    'hough_minradius': 15,
+    'hough_maxradius': 60,
+    
+    # Camp capacities
+    'camp_capacity': {
+        "blue": 4,
+        "pink": 3,
+        "grey": 2
+    },
+    # ... more parameters
+}
+```
+
+### Input Image
+Place your image at `task_images/4.png` or modify the path in the script:
+```python
+image = cv2.imread("your_image_path.png")
+```
+
 ### Output Files
-- `output/segmented.png` - Land and ocean segmentation visualization
-- `output/final_assignment.png` - Final assignment visualization showing camps and assigned casualties
+The script generates two output images in the `output/` directory:
+- **segmented.png** - Shows land (green) and ocean (blue) segmentation
+- **final_assignment.png** - Shows camps and their assigned casualties with colored lines
 
 ## How It Works
 
 ### Step 1: Image Segmentation
-The system segments the image into land and ocean regions using HSV color ranges. This provides environmental context for the disaster scenario.
+Segments the image into land and ocean regions using HSV color ranges for environmental context.
 
 ### Step 2: Camp Detection
-Circular camps are detected using the Hough Circle Transform. Each camp is then classified by color (blue, pink, or grey) which determines its capacity:
-- Blue camps: 4 people
-- Pink camps: 3 people
-- Grey camps: 2 people
+Detects circular camps using Hough Circle Transform. Each camp is classified by color:
+- **Blue camps**: Capacity 4 people
+- **Pink camps**: Capacity 3 people
+- **Grey camps**: Capacity 2 people
 
 ### Step 3: Casualty Detection
-Casualties are detected using color-based segmentation and shape analysis:
-- **Color indicates condition:**
-  - Red = Severe (priority: 3)
-  - Yellow = Mild (priority: 2)
-  - Green = Safe (priority: 1)
-- **Shape indicates age:**
-  - Triangle = Elderly (priority: 2)
-  - Rectangle = Adult (priority: 1)
-  - Other shapes = Child (priority: 3)
+Detects casualties using color and shape analysis:
 
-### Step 4: Assignment Algorithm
-Each casualty is assigned to a camp using a priority-based greedy algorithm:
-1. Calculate priority = age_score × condition_score
-2. Sort casualties by priority (highest first)
-3. For each casualty, find the best available camp based on:
-   - Assignment score = priority / (distance + 1)
-4. Assign to the camp with highest score
+**Color indicates condition (severity):**
+- **Red** = Severe (condition score: 3)
+- **Yellow** = Mild (condition score: 2)
+- **Green** = Safe (condition score: 1)
 
-### Step 5: Reporting
-The system generates a detailed report showing:
-- Camp locations and capacities
-- Number of assigned casualties per camp
+**Shape indicates age group:**
+- **Triangle** = Elderly (age score: 2)
+- **Rectangle** = Adult (age score: 1)
+- **Other shapes** = Child (age score: 3)
+
+### Step 4: Priority Assignment
+Each casualty receives a priority score:
+```
+Priority = Age Score × Condition Score
+```
+
+Examples:
+- Elderly + Severe = 2 × 3 = **6** (highest priority)
+- Child + Mild = 3 × 2 = **6** (highest priority)
+- Adult + Safe = 1 × 1 = **1** (lowest priority)
+
+### Step 5: Camp Assignment Algorithm
+Uses a greedy algorithm to assign casualties to camps:
+
+1. Sort all casualties by priority (highest first)
+2. For each casualty:
+   - Calculate assignment score for each available camp:
+     ```
+     Score = Priority / (Distance + 1)
+     ```
+   - Assign to the camp with highest score
+3. Continue until all casualties are assigned or camps are full
+
+This balances urgency with proximity - high priority casualties get preference, but distance is also considered.
+
+### Step 6: Generate Report
+Prints a detailed report showing:
+- Number of camps detected
+- Number of casualties found
+- Assignment details per camp
 - Total priority scores
 - Rescue ratio (effectiveness metric)
+
+## Output Report Example
+
+```
+Detected 3 camps
+Detected 12 casualties
+
+Camp Details:
+Camp 0: blue at (150, 200), assigned: 4/4
+Camp 1: pink at (300, 250), assigned: 3/3
+Camp 2: grey at (450, 180), assigned: 2/2
+
+Camp Priority Totals: [18, 12, 8]
+Rescue Ratio: 4.22
+
+Output saved to output/ directory
+```
+
+## Understanding the Results
+
+### Rescue Ratio
+The rescue ratio is calculated as:
+```
+Rescue Ratio = Total Priority / Total People Assigned
+```
+
+Higher rescue ratio means more high-priority casualties were successfully assigned.
+
+### Camp Totals
+Shows the sum of priority scores for all casualties assigned to each camp. Higher numbers indicate camps handling more urgent cases.
+
+## Customization
+
+### Adding New Camp Colors
+Add to the camp detection function:
+```python
+def detect_camp_color(x, y):
+    # Add your color detection logic
+    if your_condition:
+        return "your_color"
+```
+
+Update capacity:
+```python
+CONFIG['camp_capacity'] = {
+    "blue": 4,
+    "pink": 3,
+    "grey": 2,
+    "your_color": 5  # Add new camp type
+}
+```
+
+### Adjusting Detection Sensitivity
+Modify HSV ranges in CONFIG:
+```python
+CONFIG = {
+    'severe_lower1': np.array([0, 70, 50]),   # Adjust these values
+    'severe_upper1': np.array([10, 255, 255]),
+    # ... adjust other ranges
+}
+```
+
+### Changing Circle Detection
+Tune Hough Circle parameters:
+```python
+CONFIG = {
+    'hough_param1': 100,      # Edge detection threshold
+    'hough_param2': 30,       # Circle detection threshold (lower = more circles)
+    'hough_minradius': 15,    # Minimum circle size
+    'hough_maxradius': 60,    # Maximum circle size
+}
+```
+
+## Troubleshooting
+
+### No camps detected
+- Adjust `hough_param2` (lower value detects more circles)
+- Check if camps are actually circular in the image
+- Verify image path is correct
+
+### No casualties detected
+- Check HSV color ranges match your image
+- Adjust `min_contour_area` if shapes are too small
+- Verify casualty colors match expected red/yellow/green
+
+### Poor assignments
+- Adjust camp capacities in CONFIG
+- Modify priority scoring in `casualty_priority()` function
+- Check if distance calculation needs adjustment
+
+## Design Philosophy
+
+The system balances two competing factors:
+1. **Urgency** - High priority casualties should be rescued first
+2. **Efficiency** - Nearby camps are preferred to reduce response time
+
+The scoring formula `Priority / (Distance + 1)` achieves this balance by:
+- Giving strong preference to high-priority casualties
+- Slightly favoring closer camps when priorities are equal
+- Avoiding division by zero with the "+1"
+
+## Future Enhancements
+
+Potential improvements:
+- Batch processing for multiple images
+- Real-time video stream analysis
+- Optimal assignment using Hungarian algorithm
+- Geospatial coordinate support
+- Web-based interface
+- Machine learning for better detection
+- Adjustable priority weights
